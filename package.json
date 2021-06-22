@@ -15,5 +15,12 @@
   "bugs": {
     "url": "https://github.com/sdcmars/qanda-api/issues"
   },
-  "homepage": "https://github.com/sdcmars/qanda-api#readme"
+  "homepage": "https://github.com/sdcmars/qanda-api#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "express-promise-router": "^4.1.0",
+    "pg": "^8.6.0",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.6.2"
+  }
 }
