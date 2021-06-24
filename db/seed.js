@@ -37,7 +37,7 @@ const copyCommandAP = `COPY photos FROM STDIN WITH DELIMITER ',' CSV HEADER`;
 
 const cleanup = () => {
   pool.end();
-  //pool.exit();
+  process.exit();
 }
 
 // pool.connect(function(err, client, done) {
