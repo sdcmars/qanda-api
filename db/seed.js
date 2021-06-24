@@ -1,7 +1,9 @@
+/* eslint-disable no-undef */
+/* eslint-disable no-unused-vars */
 const fs = require('fs');
 const path = require('path');
-const pool = require('./index.js');
 const copyFrom = require('pg-copy-streams').from;
+const pool = require('./index');
 
 //const { insertQuestions, insertAnswers, insertPhotos } = require('./queries.js');
 
@@ -38,7 +40,7 @@ const copyCommandAP = `COPY photos FROM STDIN WITH DELIMITER ',' CSV HEADER`;
 const cleanup = () => {
   pool.end();
   process.exit();
-}
+};
 
 // pool.connect(function(err, client, done) {
 //   if (err) {
@@ -98,14 +100,14 @@ const cleanup = () => {
 
 
 
-pool.connect(function(err, client, done) {
+pool.connect((err, client, done) => {
   if (err) {
     console.log('pool connect error: ', err);
     return;
   }
 
-  var stream = client.query(copyFrom(copyCommandAP));
-  var fileStream = fs.createReadStream(filePathAP);
+  const stream = client.query(copyFrom(copyCommandAP));
+  const fileStream = fs.createReadStream(filePathAP);
 
   fileStream.on('error', (err) => {
     console.log('filestream error: ', err);
