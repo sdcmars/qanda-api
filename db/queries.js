@@ -1,48 +1,122 @@
+/* eslint-disable no-undef */
+/* eslint-disable no-unused-vars */
 const pool = require('./index.js');
 
 module.exports = {
-  insertQuestions: (lines) => {
-    const text = 'INSERT INTO questions (question_id, product_id, question_body, question_date, asker_name, email, reported, question_helpfulness) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)';
-    const values = lines.map((line) => line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g));
+  getQuestions: (id, count = 5, page = 1) => {
+    const query = `SELECT question_id, question_body, question_date, asker_name, question_helpfulness
+    FROM questions
+    WHERE questions.product_id = $1 AND questions.reported = 0
+    LIMIT ${count} OFFSET ${page * count};`;
 
-    values.forEach((value) => {
-      value[3] = new Date(Number(value[3]));
+    const value = [id];
 
-      pool.query(text, value)
-        .then((res) => console.log(res.rows))
-        .catch((e) => console.log(e));
-    });
-  },
-  insertAnswers: (lines) => {
-    const text = 'INSERT INTO answers (answer_id, question_id, body, date, answerer_name, email, reported, helpfulness) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)';
-    const values = lines.map((line) => line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g));
+    const aQuery = `SELECT * FROM answers WHERE answers.question_id = $1 AND answers.reported = 0;`;
 
-    values.forEach((value) => {
-      value[3] = new Date(Number(value[3]));
+    const pQuery = `SELECT * FROM photos WHERE photos.answer_id = $1;`;
 
-      pool.query(text, value)
-        .then((res) => console.log(res))
-        .catch((e) => console.log(e));
-    });
-  },
-  insertPhotos: (lines) => {
-    const text = 'INSERT INTO photos (id, answer_id, url) VALUES ($1, $2, $3)';
-    const values = lines.map((line) => line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g));
+    let response = {
+      product_id: id,
+      results: []
+    }
 
-    // const query = {
-    //   name: 'insert-photos',
-    //   text: text,
-    //   values: values
-    // };
+    let questions = {};
+    let answers = {};
+    let ids = [];
 
-    // pool.query(query)
-    //   .then(res => console.log(res.rows[0]))
-    //   .catch(e => console.log(e.stack));
+    return pool.connect()
+      .then(client => {
+        return client.query(query, value)
+          .then(res => {
+            let qs = res.rows;
 
-    values.forEach((value) => {
-      pool.query(text, value)
-        .then((res) => console.log(res))
-        .catch((e) => console.log(e));
-    });
-  },
+            for(let q of qs) {
+              questions[q.question_id] = {
+                question_id: q.question_id,
+                question_body: q.question_body,
+                question_date: new Date(Number(q.question_date)),
+                asker_name: q.asker_name,
+                question_helpfulness: q.question_helpfulness,
+                reported: false,
+                answers: {}
+              }
+            }
+
+            return Promise.all(qs.map(q => {
+              return client.query(aQuery, [q.question_id]);
+            }))
+
+          })
+          .then(res => {
+            let ans = res.flatMap(a => a.rows);
+
+            for (let a of ans) {
+              ids.push({ question: a.question_id, answer: a.answer_id });
+
+              questions[a.question_id].answers[a.answer_id] = {
+                id: a.answer_id,
+                body: a.body,
+                date: new Date(Number(a.date)),
+                answerer_name: a.answerer_name,
+                helpfulness: a.helpfulness,
+                photos: []
+              }
+            }
+
+
+            return Promise.all(ids.map(id => {
+              return client.query(pQuery, [id.answer]);
+            }));
+
+          })
+          .then(res => {
+            client.release();
+            let photos = res.flatMap(p => p.rows);
+
+            for (let p of photos) {
+              for (let a of ids) {
+                if (p.answer_id === a.answer) {
+                  questions[a.question].answers[a.answer].photos.push(p.url);
+                }
+              }
+            }
+
+            for (let q in questions) {
+              response.results.push(questions[q]);
+            }
+
+
+            return response;
+          })
+          .catch(err => {
+            client.release();
+            console.log(err.stack);
+          })
+      })
+  }
 };
+
+
+
+// get all questions from product id and reported = 0
+// all the info to an object
+// then get all answers from all returned questions
+// "email": "first.last@gmail.com",
+
+// "product_id": 3,
+
+// {
+//   "question_id": 21,
+//   "question_body": "Is it noise cancelling?",
+//   "question_date": "1608732209572",
+//   "asker_name": "jbilas",
+//   "question_helpfulness": 4
+//   "reported": 1,
+// },
+
+// "question_id": 183056,
+// "question_body": "whattttt???",
+// "question_date": "2021-04-25T00:00:00.000Z",
+// "asker_name": "testing",
+// "question_helpfulness": 9,
+// "reported": false,
