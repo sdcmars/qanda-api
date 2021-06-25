@@ -3,20 +3,23 @@
 const pool = require('./index.js');
 
 module.exports = {
-  getQuestions: (id, count = 5, page = 1) => {
+  getQuestions: ({ product_id, count, page }) => {
+    count = count || 5;
+    page = page || 1;
+
     const query = `SELECT question_id, question_body, question_date, asker_name, question_helpfulness
     FROM questions
     WHERE questions.product_id = $1 AND questions.reported = 0
-    LIMIT ${count} OFFSET ${page * count};`;
+    LIMIT ${count} OFFSET ${(page - 1) * count};`;
 
-    const value = [id];
+    const value = [product_id];
 
     const aQuery = `SELECT * FROM answers WHERE answers.question_id = $1 AND answers.reported = 0;`;
 
     const pQuery = `SELECT * FROM photos WHERE photos.answer_id = $1;`;
 
     let response = {
-      product_id: id,
+      product_id: product_id.toString(),
       results: []
     }
 
@@ -91,6 +94,66 @@ module.exports = {
           .catch(err => {
             client.release();
             console.log(err.stack);
+          })
+      })
+  },
+  getAnswers: ({ question_id, count, page }) => {
+    count = count || 5;
+    page = page || 1;
+    const query = `SELECT answer_id, body, date, answerer_name, helpfulness FROM answers
+    WHERE answers.question_id = $1 AND answers.reported = 0
+    LIMIT ${count} OFFSET ${(page - 1) * count};`;
+
+    const value = [question_id];
+
+    const pQuery = `SELECT * FROM photos WHERE answer_id = $1;`;
+
+    let response = {
+      question: question_id,
+      page: page,
+      count: count,
+      results: []
+    };
+
+    let answers = {};
+
+    return pool.connect()
+      .then(client => {
+        return client.query(query, value)
+          .then(res => {
+            let ans = res.rows;
+            //console.log(res.rows);
+            for (let a of ans) {
+              answers[a.answer_id] = {
+                answer_id: a.answer_id,
+                body: a.body,
+                date: new Date(Number(a.date)),
+                answerer_name: a.answerer_name,
+                helpfulness: a.helpfulness,
+                photos: []
+              }
+            }
+
+            return Promise.all(ans.map(a => {
+              return client.query(pQuery, [a.answer_id])
+            }))
+          })
+          .then(res => {
+            let photos = res.flatMap(p => p.rows);
+
+            for (let p of photos) {
+              answers[p.answer_id].photos.push(p.url);
+            }
+
+            for (let a in answers) {
+              response.results.push(answers[a]);
+            }
+
+            return response;
+          })
+          .catch(err => {
+            client.release();
+            console.log(err);
           })
       })
   }
