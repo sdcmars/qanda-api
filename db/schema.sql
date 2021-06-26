@@ -5,7 +5,7 @@ CREATE DATABASE qanda;
 \c qanda;
 
 CREATE TABLE questions (
-  question_id int primary key,
+  question_id int serial primary key,
   product_id int not null,
   question_body varchar(1000) not null,
   question_date text not null,
@@ -16,7 +16,7 @@ CREATE TABLE questions (
 );
 
 CREATE TABLE answers (
-  answer_id int primary key,
+  answer_id int serial primary key,
   question_id int references questions (question_id),
   body varchar(1000) not null,
   date text,

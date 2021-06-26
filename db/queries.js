@@ -101,7 +101,7 @@ module.exports = {
     count = count || 5;
     page = page || 1;
     const query = `SELECT answer_id, body, date, answerer_name, helpfulness FROM answers
-    WHERE answers.question_id = $1 AND answers.reported = 0
+    WHERE answers.q_id = $1 AND answers.reported = 0
     LIMIT ${count} OFFSET ${(page - 1) * count};`;
 
     const value = [question_id];
@@ -185,58 +185,99 @@ module.exports = {
     }
 
     return pool.connect()
-      .then(client => client.query(query, value))
-      .then(res => {
-        let rows = res.rows;
-        let qs = {};
-        let as = {};
+      .then(client => {
+        return client.query(query, value)
+        .then(res => {
+          client.release();
 
-        for (let x of rows) {
-          qs[x.question_id] = {
-            question_id: x.question_id,
-            question_body: x.question_body,
-            question_date: new Date(Number(x.question_date)),
-            asker_name: x.asker_name,
-            question_helpfulness: x.question_helpfulness,
-            answers: {}
-          };
+          let rows = res.rows;
+          let qs = {};
+          let as = {};
 
-          if (x.answer_id) {
-            as[x.answer_id] = {
-              answer_id: x.answer_id,
-              question: x.q_id,
-              body: x.body,
-              date: new Date(Number(x.date)),
-              answerer_name: x.answerer_name,
-              helpfulness: x.helpfulness,
-              photos: []
+          for (let x of rows) {
+            qs[x.question_id] = {
+              question_id: x.question_id,
+              question_body: x.question_body,
+              question_date: new Date(Number(x.question_date)),
+              asker_name: x.asker_name,
+              question_helpfulness: x.question_helpfulness,
+              answers: {}
+            };
+
+            if (x.answer_id) {
+              as[x.answer_id] = {
+                answer_id: x.answer_id,
+                question: x.q_id,
+                body: x.body,
+                date: new Date(Number(x.date)),
+                answerer_name: x.answerer_name,
+                helpfulness: x.helpfulness,
+                photos: []
+              }
             }
-            // qs[x.question_id].answers[x.answer_id] = as[x.answer_id];
+            if (x.url) {
+              as[x.answer_id].photos.push(x.url);
+            }
+
           }
-          if (x.url) {
-            as[x.answer_id].photos.push(x.url);
+
+          for (let a in as) {
+            qs[as[a].question].answers[as[a].answer_id] = as[a];
           }
 
-        }
+          for (let q in qs) {
+            response.results.push(qs[q]);
+          }
 
-        for (let a in as) {
-          qs[as[a].question].answers[as[a].answer_id] = as[a];
-        }
+          let start = (page - 1) * count;
+          let end = start + count;
+          response.results = response.results.slice(start, end);
 
-        for (let q in qs) {
-          response.results.push(qs[q]);
-        }
+          return response;
 
-        // limit = count
-        // page = (page - 1) * count
-        let start = (page - 1) * count;
-        let end = start + count;
-        response.results = response.results.slice(start, end);
-
-        //console.log(qs);
-        return response;
-
+        })
+        .catch(err => console.log(err));
       })
-      .catch(err => console.log(err));
+  },
+  post: (info) => {
+    let columns;
+    let values;
+
+    if (info.type === 'questions') {
+      columns = 'product_id, question_body, question_date, asker_name, email';
+      values = `${info.product_id}, '${info.body}', '${Date.now()}', '${info.name}', '${info.email}'`
+    } else if (info.photos) {
+      // look into CTEs for adding to two tables at once
+      // currently front end doesn't accept photo upload
+      columns = '?';
+      values = '?';
+    } else {
+      columns = 'q_id, body, date, answerer_name, email';
+      values = `'${info.question_id}', '${info.body}', '${info.name}', '${info.email}'`
+    }
+
+    const query = `INSERT INTO ${info.type} (${columns})
+      VALUES (${values})
+      RETURNING *;`;
+
+    console.log('QUERY: ', query);
+    console.log('TYPE IS QUESTIONS?: ', info.type === 'questions');
+    console.log('INFO: ', info);
+
+    return pool.query(query)
+      .then(res => res)
+      .catch(e => console.log(e));
+
   }
 };
+
+// req.body for post question
+// {
+//   body: 'blah',
+//   name: 'jackson11',
+//   email: 'bob@mail.com',
+//   product_id: 19089
+// }
+
+// req.body for post answer
+// { body: 'Who?', name: 'jack', email: 'bob@mail.com' }

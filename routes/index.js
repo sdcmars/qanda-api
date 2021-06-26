@@ -10,25 +10,19 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-
-// app.get('/*', (req, res) => {
-//   db.getQs(3)
-//     .then(response => res.send(response));
-// })
-
-
 app.get('/qa/questions*', (req, res) => {
 
-  let urlObj = url.parse(req.url, true);
-  let path = urlObj.pathname;
+  let data = url.parse(req.url, true);
+  let path = data.pathname;
 
+  // should it be data.query.question_id ?
   if (path.includes('answers')) {
-    urlObj.question_id = path.split('/')[3];
-    db.getAnswers(urlObj)
+    data.question_id = path.split('/')[3];
+    db.getAnswers(data)
       .then(response => res.send(response))
       .catch(err => console.log(err));
   } else {
-    return db.getQs(urlObj.query)
+    return db.getQs(data.query)
       .then(response => res.send(response))
       .catch(err => console.log(err));
   }
@@ -37,20 +31,27 @@ app.get('/qa/questions*', (req, res) => {
 
 app.post('/qa/questions', (req, res) => {
 
-  let urlObj = url.parse(req.url, true);
-  let path = urlObj.pathname;
+  let path = url.parse(req.url, true).pathname;
+  let data = req.body;
 
   if (path.includes('answers')) {
-    // post answer
+    data.question_id = path.split('/')[3];
+    data.type = 'answers';
+    db.post(data)
+      .then(response => res.send(resonse))
+      .catch(e => console.log(e));
   } else {
-    // post question
+    data.type = 'questions';
+    db.post(data)
+      .then(response => res.send(response))
+      .catch(e => console.log(e));
   }
 });
 
 app.put('/qa/*', (req, res) => {
 
-  let urlObj = url.parse(req.url, true);
-  let path = urlObj.pathname;
+  let data = url.parse(req.url, true);
+  let path = data.pathname;
 
   let type = path.split('/')[4]; // helpful or report
 
