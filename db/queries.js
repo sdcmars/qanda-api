@@ -156,30 +156,87 @@ module.exports = {
             console.log(err);
           })
       })
+  },
+  getQs: ({ product_id, count, page }) => {
+    count = count || 5;
+    page = page || 1;
+
+    // DISTINCT ON (q.question_id)
+    // need to fix the limit and offset for the join
+    const query =
+      `SELECT
+        q.question_id, q.question_body, q.question_date, q.asker_name, q.question_helpfulness,
+        a.answer_id, a.q_id, a.body, a.date, a.answerer_name, a.helpfulness,
+        p.url
+      FROM questions q
+      LEFT JOIN
+        answers a ON q.question_id = a.q_id
+      LEFT JOIN
+        photos p ON a.answer_id = p.answer_id
+      WHERE
+        q.product_id = $1
+      ORDER BY q.question_id`;
+
+    const value = [product_id];
+
+    let response = {
+      product_id: product_id,
+      results: []
+    }
+
+    return pool.connect()
+      .then(client => client.query(query, value))
+      .then(res => {
+        let rows = res.rows;
+        let qs = {};
+        let as = {};
+
+        for (let x of rows) {
+          qs[x.question_id] = {
+            question_id: x.question_id,
+            question_body: x.question_body,
+            question_date: new Date(Number(x.question_date)),
+            asker_name: x.asker_name,
+            question_helpfulness: x.question_helpfulness,
+            answers: {}
+          };
+
+          if (x.answer_id) {
+            as[x.answer_id] = {
+              answer_id: x.answer_id,
+              question: x.q_id,
+              body: x.body,
+              date: new Date(Number(x.date)),
+              answerer_name: x.answerer_name,
+              helpfulness: x.helpfulness,
+              photos: []
+            }
+            // qs[x.question_id].answers[x.answer_id] = as[x.answer_id];
+          }
+          if (x.url) {
+            as[x.answer_id].photos.push(x.url);
+          }
+
+        }
+
+        for (let a in as) {
+          qs[as[a].question].answers[as[a].answer_id] = as[a];
+        }
+
+        for (let q in qs) {
+          response.results.push(qs[q]);
+        }
+
+        // limit = count
+        // page = (page - 1) * count
+        let start = (page - 1) * count;
+        let end = start + count;
+        response.results = response.results.slice(start, end);
+
+        //console.log(qs);
+        return response;
+
+      })
+      .catch(err => console.log(err));
   }
 };
-
-
-
-// get all questions from product id and reported = 0
-// all the info to an object
-// then get all answers from all returned questions
-// "email": "first.last@gmail.com",
-
-// "product_id": 3,
-
-// {
-//   "question_id": 21,
-//   "question_body": "Is it noise cancelling?",
-//   "question_date": "1608732209572",
-//   "asker_name": "jbilas",
-//   "question_helpfulness": 4
-//   "reported": 1,
-// },
-
-// "question_id": 183056,
-// "question_body": "whattttt???",
-// "question_date": "2021-04-25T00:00:00.000Z",
-// "asker_name": "testing",
-// "question_helpfulness": 9,
-// "reported": false,

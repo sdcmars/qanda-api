@@ -10,6 +10,13 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
+
+// app.get('/*', (req, res) => {
+//   db.getQs(3)
+//     .then(response => res.send(response));
+// })
+
+
 app.get('/qa/questions*', (req, res) => {
 
   let urlObj = url.parse(req.url, true);
@@ -21,7 +28,7 @@ app.get('/qa/questions*', (req, res) => {
       .then(response => res.send(response))
       .catch(err => console.log(err));
   } else {
-    return db.getQuestions(urlObj.query)
+    return db.getQs(urlObj.query)
       .then(response => res.send(response))
       .catch(err => console.log(err));
   }
