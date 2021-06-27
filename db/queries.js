@@ -175,7 +175,7 @@ module.exports = {
         photos p ON a.answer_id = p.answer_id
       WHERE
         q.product_id = $1
-      ORDER BY q.question_id`;
+      ORDER BY q.question_id;`;
 
     const value = [product_id];
 
@@ -244,8 +244,8 @@ module.exports = {
     let values;
 
     if (info.type === 'questions') {
-      columns = 'product_id, question_body, question_date, asker_name, email';
-      values = `${info.product_id}, '${info.body}', '${Date.now()}', '${info.name}', '${info.email}'`
+      columns = 'question_id, product_id, question_body, question_date, asker_name, email';
+      values = `nextval('question_id_seq'), ${info.product_id}, '${info.body}', '${Date.now()}', '${info.name}', '${info.email}'`
     } else if (info.photos) {
       // look into CTEs for adding to two tables at once
       // currently front end doesn't accept photo upload
@@ -265,7 +265,7 @@ module.exports = {
     console.log('INFO: ', info);
 
     return pool.query(query)
-      .then(res => res)
+      .then(res => res.rows)
       .catch(e => console.log(e));
 
   }

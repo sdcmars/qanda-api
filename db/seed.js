@@ -26,32 +26,32 @@ const cleanup = () => {
 };
 
 // seed questions
-pool.connect(function(err, client, done) {
-  if (err) {
-    console.log('pool connect error: ', err);
-    return;
-  }
+// pool.connect(function(err, client, done) {
+//   if (err) {
+//     console.log('pool connect error: ', err);
+//     return;
+//   }
 
-  var stream = client.query(copyFrom(copyCommandQ));
-  var fileStream = fs.createReadStream(filePathQ);
+//   var stream = client.query(copyFrom(copyCommandQ));
+//   var fileStream = fs.createReadStream(filePathQ);
 
-  fileStream.on('error', (err) => {
-    console.log('filestream error: ', err);
-    cleanup();
-  });
+//   fileStream.on('error', (err) => {
+//     console.log('filestream error: ', err);
+//     cleanup();
+//   });
 
-  stream.on('error', (err) => {
-    console.log('stream error: ', err);
-    cleanup();
-  });
+//   stream.on('error', (err) => {
+//     console.log('stream error: ', err);
+//     cleanup();
+//   });
 
-  stream.on('end', () => {
-    console.log('complete');
-    cleanup();
-  });
+//   stream.on('end', () => {
+//     console.log('complete');
+//     cleanup();
+//   });
 
-  fileStream.pipe(stream);
-})
+//   fileStream.pipe(stream)
+// })
 
 
 // seed answers
@@ -84,29 +84,36 @@ pool.connect(function(err, client, done) {
 
 
 // seed photos
-// pool.connect((err, client, done) => {
-//   if (err) {
-//     console.log('pool connect error: ', err);
-//     return;
-//   }
+pool.connect((err, client, done) => {
+  if (err) {
+    console.log('pool connect error: ', err);
+    return;
+  }
 
-//   const stream = client.query(copyFrom(copyCommandAP));
-//   const fileStream = fs.createReadStream(filePathAP);
+  const stream = client.query(copyFrom(copyCommandAP));
+  const fileStream = fs.createReadStream(filePathAP);
 
-//   fileStream.on('error', (err) => {
-//     console.log('filestream error: ', err);
-//     cleanup();
-//   });
+  fileStream.on('error', (err) => {
+    console.log('filestream error: ', err);
+    cleanup();
+  });
 
-//   stream.on('error', (err) => {
-//     console.log('stream error: ', err);
-//     cleanup();
-//   });
+  stream.on('error', (err) => {
+    console.log('stream error: ', err);
+    cleanup();
+  });
 
-//   stream.on('end', () => {
-//     console.log('complete');
-//     cleanup();
-//   });
+  stream.on('end', () => {
+    console.log('complete');
+    cleanup();
+  });
 
-//   fileStream.pipe(stream);
+  fileStream.pipe(stream);
+})
+
+
+// this gives the complete message but prevents the piping
+// fileStream.on('end', () => {
+//   console.log('complete');
+//   cleanup();
 // })

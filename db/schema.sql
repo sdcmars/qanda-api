@@ -5,7 +5,7 @@ CREATE DATABASE qanda;
 \c qanda;
 
 CREATE TABLE questions (
-  question_id int serial primary key,
+  question_id serial primary key,
   product_id int not null,
   question_body varchar(1000) not null,
   question_date text not null,
@@ -16,8 +16,8 @@ CREATE TABLE questions (
 );
 
 CREATE TABLE answers (
-  answer_id int serial primary key,
-  question_id int references questions (question_id),
+  answer_id serial primary key,
+  q_id int references questions (question_id),
   body varchar(1000) not null,
   date text,
   answerer_name varchar(60),
@@ -27,7 +27,16 @@ CREATE TABLE answers (
 );
 
 CREATE TABLE photos (
-  id int primary key,
+  id serial primary key,
   answer_id int references answers (answer_id),
   url text not null
 );
+
+CREATE INDEX idx_product_id
+ON questions(product_id);
+
+CREATE INDEX idx_question_id
+ON answers(q_id);
+
+CREATE INDEX idx_answer_id
+ON photos(answer_id);
