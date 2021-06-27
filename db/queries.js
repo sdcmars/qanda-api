@@ -100,9 +100,13 @@ module.exports = {
   getAnswers: ({ question_id, count, page }) => {
     count = count || 5;
     page = page || 1;
-    const query = `SELECT answer_id, body, date, answerer_name, helpfulness FROM answers
-    WHERE answers.q_id = $1 AND answers.reported = 0
-    LIMIT ${count} OFFSET ${(page - 1) * count};`;
+
+    const query = `
+      SELECT answer_id, body, date, answerer_name, helpfulness
+      FROM answers
+      WHERE answers.q_id = $1 AND answers.reported = 0
+      LIMIT ${count} OFFSET ${(page - 1) * count};
+    `;
 
     const value = [question_id];
 
@@ -122,7 +126,7 @@ module.exports = {
         return client.query(query, value)
           .then(res => {
             let ans = res.rows;
-            //console.log(res.rows);
+
             for (let a of ans) {
               answers[a.answer_id] = {
                 answer_id: a.answer_id,
@@ -139,6 +143,8 @@ module.exports = {
             }))
           })
           .then(res => {
+            client.release();
+
             let photos = res.flatMap(p => p.rows);
 
             for (let p of photos) {
@@ -256,28 +262,51 @@ module.exports = {
       values = `nextval('answer_id_seq'), '${info.question_id}', '${info.body}', ${Date.now()}, '${info.name}', '${info.email}'`
     }
 
-    const query = `INSERT INTO ${info.type} (${columns})
+    const query = `
+      INSERT INTO ${info.type} (${columns})
       VALUES (${values})
-      RETURNING *;`;
-
-    console.log('QUERY: ', query);
-    console.log('TYPE IS QUESTIONS?: ', info.type === 'questions');
-    console.log('INFO: ', info);
+      RETURNING *;
+      `;
 
     return pool.query(query)
       .then(res => res.rows)
       .catch(e => console.log(e));
 
+  },
+  report: (id, table) => {
+    let column = table === 'questions' ? 'question_id' : 'answer_id';
+
+    const query =`
+      UPDATE ${table}
+      SET reported = 1
+      WHERE ${column} = ${id}
+      RETURNING *;
+    `;
+
+    return pool.query(query)
+      .then(res => res.rows)
+      .catch(e => console.log(e));
+  },
+  help: (id, table) => {
+    let idCol, helpCol;
+
+    if (table === 'questions') {
+      idCol = 'question_id';
+      helpCol = 'question_helpfulness';
+    } else {
+      idCol = 'answer_id';
+      helpCol = 'helpfulness';
+    }
+
+    const query = `
+      UPDATE ${table}
+      SET ${helpCol} = ${helpCol} + 1
+      WHERE ${idCol} = ${id}
+      RETURNING *;
+    `;
+
+    return pool.query(query)
+      .then(res => res.rows)
+      .catch(e => console.log(e));
   }
 };
-
-// req.body for post question
-// {
-//   body: 'blah',
-//   name: 'jackson11',
-//   email: 'bob@mail.com',
-//   product_id: 19089
-// }
-
-// req.body for post answer
-// { body: 'Who?', name: 'jack', email: 'bob@mail.com' }

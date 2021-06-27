@@ -51,18 +51,21 @@ app.post('/qa/questions*', (req, res) => {
 
 app.put('/qa/*', (req, res) => {
 
-  let data = url.parse(req.url, true);
-  let path = data.pathname;
+  let path = url.parse(req.url, true).pathname;
 
   let type = path.split('/')[4]; // helpful or report
+  let id = path.split('/')[3];
+  let table = path.includes('answers') ? 'answers' : 'questions';
 
-  console.log(type);
-  res.end();
-
-  if (path.includes('answers')) {
-    // put answers w/ type
+  if (type === 'report') {
+    console.log(type);
+    db.report(id, table)
+      .then(response => res.send(response))
+      .catch(e => console.log(e));
   } else {
-    // put questions w/ type
+    db.help(id, table)
+      .then(response => res.send(response))
+      .catch(e => console.log(e));
   }
 });
 
