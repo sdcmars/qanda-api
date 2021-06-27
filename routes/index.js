@@ -17,8 +17,9 @@ app.get('/qa/questions*', (req, res) => {
 
   // should it be data.query.question_id ?
   if (path.includes('answers')) {
-    data.question_id = path.split('/')[3];
-    db.getAnswers(data)
+    data.query.question_id = path.split('/')[3];
+    console.log(data);
+    db.getAnswers(data.query)
       .then(response => res.send(response))
       .catch(err => console.log(err));
   } else {
@@ -37,12 +38,12 @@ app.post('/qa/questions*', (req, res) => {
   if (path.includes('answers')) {
     data.question_id = path.split('/')[3];
     data.type = 'answers';
-    db.post(data)
+    db.add(data)
       .then(response => res.send(response))
       .catch(e => console.log(e));
   } else {
     data.type = 'questions';
-    db.post(data)
+    db.add(data)
       .then(response => res.send(response))
       .catch(e => console.log(e));
   }

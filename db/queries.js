@@ -239,7 +239,7 @@ module.exports = {
         .catch(err => console.log(err));
       })
   },
-  post: (info) => {
+  add: (info) => {
     let columns;
     let values;
 
