@@ -252,8 +252,8 @@ module.exports = {
       columns = '?';
       values = '?';
     } else {
-      columns = 'q_id, body, date, answerer_name, email';
-      values = `'${info.question_id}', '${info.body}', '${info.name}', '${info.email}'`
+      columns = 'answer_id, q_id, body, date, answerer_name, email';
+      values = `nextval('answer_id_seq'), '${info.question_id}', '${info.body}', ${Date.now()}, '${info.name}', '${info.email}'`
     }
 
     const query = `INSERT INTO ${info.type} (${columns})

@@ -29,7 +29,7 @@ app.get('/qa/questions*', (req, res) => {
 
 });
 
-app.post('/qa/questions', (req, res) => {
+app.post('/qa/questions*', (req, res) => {
 
   let path = url.parse(req.url, true).pathname;
   let data = req.body;
@@ -38,7 +38,7 @@ app.post('/qa/questions', (req, res) => {
     data.question_id = path.split('/')[3];
     data.type = 'answers';
     db.post(data)
-      .then(response => res.send(resonse))
+      .then(response => res.send(response))
       .catch(e => console.log(e));
   } else {
     data.type = 'questions';
