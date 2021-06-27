@@ -78,7 +78,7 @@ module.exports = {
 
             for (let p of photos) {
               for (let a of ids) {
-                if (p.answer_id === a.answer) {
+                if (p.a_id === a.answer) {
                   questions[a.question].answers[a.answer].photos.push(p.url);
                 }
               }
@@ -148,7 +148,7 @@ module.exports = {
             let photos = res.flatMap(p => p.rows);
 
             for (let p of photos) {
-              answers[p.answer_id].photos.push(p.url);
+              answers[p.a_id].photos.push(p.url);
             }
 
             for (let a in answers) {
@@ -173,14 +173,14 @@ module.exports = {
       `SELECT
         q.question_id, q.question_body, q.question_date, q.asker_name, q.question_helpfulness,
         a.answer_id, a.q_id, a.body, a.date, a.answerer_name, a.helpfulness,
-        p.url
+        p.a_id, p.id, p.url
       FROM questions q
       LEFT JOIN
         answers a ON q.question_id = a.q_id
       LEFT JOIN
-        photos p ON a.answer_id = p.answer_id
+        photos p ON a.answer_id = p.a_id
       WHERE
-        q.product_id = $1
+        q.product_id = $1 AND q.reported = 0
       ORDER BY q.question_id;`;
 
     const value = [product_id];
@@ -197,11 +197,12 @@ module.exports = {
           client.release();
 
           let rows = res.rows;
-          let qs = {};
-          let as = {};
+          let questions = {};
+          let answers = {};
+          let photos = {};
 
           for (let x of rows) {
-            qs[x.question_id] = {
+            questions[x.question_id] = {
               question_id: x.question_id,
               question_body: x.question_body,
               question_date: new Date(Number(x.question_date)),
@@ -211,7 +212,7 @@ module.exports = {
             };
 
             if (x.answer_id) {
-              as[x.answer_id] = {
+              answers[x.answer_id] = {
                 answer_id: x.answer_id,
                 question: x.q_id,
                 body: x.body,
@@ -221,18 +222,27 @@ module.exports = {
                 photos: []
               }
             }
-            if (x.url) {
-              as[x.answer_id].photos.push(x.url);
+
+            if (x.id) {
+              photos[x.id] = {
+                id: x.a_id,
+                url: x.url
+              }
             }
 
           }
 
-          for (let a in as) {
-            qs[as[a].question].answers[as[a].answer_id] = as[a];
+          for (let p in photos) {
+            answers[photos[p].id].photos.push(photos[p].url);
           }
 
-          for (let q in qs) {
-            response.results.push(qs[q]);
+          for (let a in answers) {
+            questions[answers[a].question].answers[answers[a].answer_id] = answers[a];
+            delete answers[a].question;
+          }
+
+          for (let q in questions) {
+            response.results.push(questions[q]);
           }
 
           let start = (page - 1) * count;
@@ -244,6 +254,83 @@ module.exports = {
         })
         .catch(err => console.log(err));
       })
+  },
+  getAs: ({ question_id, count, page }) => {
+    count = count || 5;
+    page = page || 1;
+
+    const query = `
+      SELECT
+        a.answer_id, a.body, a.date, a.answerer_name, a.helpfulness,
+        p.a_id, p.url, p.id
+      FROM answers a
+      LEFT JOIN photos p
+      ON a.answer_id = p.a_id
+      WHERE a.q_id = $1 AND a.reported = 0
+      ORDER BY a.answer_id;
+    `;
+
+    const value = [question_id];
+
+    let response = {
+      question: question_id,
+      page: page,
+      count: count,
+      results: []
+    }
+
+    return pool.query(query, value)
+      .then(res => {
+        let rows = res.rows;
+
+        let answers = {};
+        let photos = {};
+
+        for (let a of rows) {
+          answers[a.answer_id] = {
+            answer_id: a.answer_id,
+            body: a.body,
+            date: new Date(Number(a.date)),
+            answerer_name: a.answerer_name,
+            helpfulness: a.helpfulness,
+            photos: []
+          }
+          if (a.id) {
+            photos[a.id] = {
+              id: a.a_id,
+              url: a.url
+            }
+          }
+        }
+        console.log(answers);
+
+        for (let p in photos) {
+          answers[photos[p].id].photos.push(photos[p].url);
+        }
+
+        for (let a in answers) {
+          response.results.push(answers[a]);
+        }
+
+        let start = (page - 1) * count;
+        let end = start + count;
+        response.results = response.results.slice(start, end);
+
+        console.log(answers);
+
+        return response;
+
+
+      //   {
+      //     "answer_id": 1991604,
+      //     "body": "what is your question?",
+      //     "date": "2021-06-14T00:00:00.000Z",
+      //     "answerer_name": "hmm",
+      //     "helpfulness": 6,
+      //     "photos": []
+      // },
+      })
+      .catch(e => console.log(e));
   },
   add: (info) => {
     let columns;

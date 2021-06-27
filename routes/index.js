@@ -15,11 +15,10 @@ app.get('/qa/questions*', (req, res) => {
   let data = url.parse(req.url, true);
   let path = data.pathname;
 
-  // should it be data.query.question_id ?
   if (path.includes('answers')) {
     data.query.question_id = path.split('/')[3];
-    console.log(data);
-    db.getAnswers(data.query)
+
+    db.getAs(data.query)
       .then(response => res.send(response))
       .catch(err => console.log(err));
   } else {
