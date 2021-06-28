@@ -176,7 +176,7 @@ module.exports = {
         p.a_id, p.id, p.url
       FROM questions q
       LEFT JOIN
-        answers a ON q.question_id = a.q_id
+        answers a ON q.question_id = a.q_id AND a.reported = 0
       LEFT JOIN
         photos p ON a.answer_id = p.a_id
       WHERE
