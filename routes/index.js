@@ -44,6 +44,7 @@ app.post('/qa/questions*', (req, res) => {
       .then(response => res.send(response))
       .catch(e => console.log(e));
   } else {
+    console.log('posting');
     data.type = 'questions';
     db.add(data)
       .then(response => res.send(response))
