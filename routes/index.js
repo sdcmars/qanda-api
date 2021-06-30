@@ -2,12 +2,14 @@
 /* eslint-disable no-undef */
 const express = require('express');
 const url = require('url');
+const compression = require('compression');
 const db = require('../db/queries.js');
 
 
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.use(compression());
 app.use(express.json());
 
 app.get('/qa/questions*', (req, res) => {

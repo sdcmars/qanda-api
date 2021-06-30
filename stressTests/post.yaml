@@ -1,0 +1,16 @@
+config:
+  target: 'http://localhost:3000/qa/questions'
+  phases:
+    - duration: 60
+      arrivalRate: 100
+  payload:
+    path: "./newAswers.csv"
+    fiels:
+      - "body"
+      - "name"
+      - "email"
+scenarios:
+  - name: "add an answer"
+    flow:
+      - post:
+          url: "/42/answers"

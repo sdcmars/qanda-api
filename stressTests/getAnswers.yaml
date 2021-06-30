@@ -1,0 +1,13 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 60
+      arrivalRate: 100
+  payload:
+    path: "./newAswers.csv"
+    fiels:
+      - ""
+scenarios:
+  - flow:
+    - get:
+        url: "/qa/questions?product_id=1000011&count=100&page=1"

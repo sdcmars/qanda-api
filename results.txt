@@ -1,0 +1,46 @@
+Scenarios launched:  18001
+  Scenarios completed: 18001
+  Requests completed:  18001
+  Mean response/sec: 297.24
+  Response time (msec):
+    min: 0
+    max: 178
+    median: 1
+    p95: 2
+    p99: 5
+  Scenario counts:
+    0: 18001 (100%)
+  Codes:
+    200: 18001
+
+Summary report @ 19:49:47(-0400) 2021-06-28
+  Scenarios launched:  18001
+  Scenarios completed: 18001
+  Requests completed:  18001
+  Mean response/sec: 296.56
+  Response time (msec):
+    min: 0
+    max: 156
+    median: 1
+    p95: 2
+    p99: 3
+  Scenario counts:
+    0: 18001 (100%)
+  Codes:
+    200: 18001
+
+++++Node production mode++++
+Scenarios launched:  18001
+  Scenarios completed: 18001
+  Requests completed:  18001
+  Mean response/sec: 296.85
+  Response time (msec):
+    min: 0
+    max: 167
+    median: 1
+    p95: 2
+    p99: 4
+  Scenario counts:
+    0: 18001 (100%)
+  Codes:
+    200: 18001

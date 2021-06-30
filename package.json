@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/sdcmars/qanda-api#readme",
   "dependencies": {
+    "compression": "^1.7.4",
     "express": "^4.17.1",
     "express-promise-router": "^4.1.0",
     "pg": "^8.6.0",
