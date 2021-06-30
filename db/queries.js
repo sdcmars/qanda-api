@@ -175,8 +175,8 @@ module.exports = {
           SELECT
             q.question_id, q.question_body, q.question_date, q.asker_name, q.question_helpfulness
           FROM questions q
-          WHERE q.product_id = 3 AND q.reported = 0
-          LIMIT 10 OFFSET 5
+          WHERE q.product_id = $1 AND q.reported = 0
+          LIMIT ${count} OFFSET ${(page - 1) * count}
         )
       SELECT
         question_id, question_body, question_date, asker_name, question_helpfulness,
@@ -250,10 +250,6 @@ module.exports = {
           for (let q in questions) {
             response.results.push(questions[q]);
           }
-
-          // let start = (page - 1) * count;
-          // let end = start + count;
-          // response.results = response.results.slice(start, end);
 
           return response;
 
@@ -400,6 +396,72 @@ module.exports = {
 
     return pool.query(query)
       .then(res => res.rows)
+      .catch(e => console.log(e));
+  },
+  getQuestionsAgg: ({ product_id, count, page }) => {
+    count = count || 5;
+    page = page || 1;
+
+    const query =`
+    SELECT
+      q.question_id,
+      q.question_body,
+      q.question_date,
+      q.asker_name,
+      q.question_helpfulness,
+      ARRAY_AGG((a.answer_id, a.body, a.date, a.answerer_name, a.helpfulness)) answers,
+      ARRAY_AGG(p.url) photos
+    FROM questions q
+    LEFT JOIN answers a
+      ON q.question_id = a.q_id
+    LEFT JOIN photos p
+      ON a.answer_id = p.a_id
+    WHERE q.product_id = $1
+    GROUP BY q.question_id;
+      `;
+
+    const value = [product_id];
+
+    return pool.query(query, value)
+      .then(res => {
+        let rows = res.rows;
+        // let answers = rows.map(row => JSON.parse(row.answers));
+        // console.log(answers);
+        return rows;
+      })
+      .catch(e => console.log(e));
+  },
+  getAnswersAgg: ({ question_id, count, page }) => {
+    count = count || 5;
+    page = page || 1;
+
+    const query = `
+      SELECT
+        a.answer_id, a.body, a.date, a.answerer_name, a.helpfulness,
+        ARRAY_AGG (p.url) photos
+      FROM answers a
+      LEFT JOIN photos p
+        ON a.answer_id = p.a_id
+      WHERE a.q_id = $1
+      GROUP BY a.answer_id
+      LIMIT ${count} OFFSET ${(page - 1) * count};
+    `;
+
+    const value = [question_id];
+
+    return pool.query(query, value)
+      .then(res => {
+        let rows = res.rows;
+        let response = {
+          question: question_id,
+          page: page,
+          count: count,
+          results: rows
+        }
+
+        return response;
+
+      })
       .catch(e => console.log(e));
   }
 };
