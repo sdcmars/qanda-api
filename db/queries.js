@@ -175,8 +175,8 @@ module.exports = {
           SELECT
             q.question_id, q.question_body, q.question_date, q.asker_name, q.question_helpfulness
           FROM questions q
-          WHERE q.product_id = 3 AND q.reported = 0
-          LIMIT 10 OFFSET 5
+          WHERE q.product_id = $1 AND q.reported = 0
+          LIMIT ${count} OFFSET ${(page - 1) * count}
         )
       SELECT
         question_id, question_body, question_date, asker_name, question_helpfulness,
@@ -251,9 +251,9 @@ module.exports = {
             response.results.push(questions[q]);
           }
 
-          let start = (page - 1) * count;
-          let end = start + count;
-          response.results = response.results.slice(start, end);
+          // let start = (page - 1) * count;
+          // let end = start + count;
+          // response.results = response.results.slice(start, end);
 
           return response;
 
