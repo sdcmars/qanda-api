@@ -10,8 +10,11 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-app.get('/qa/questions*', (req, res) => {
+app.get('/loaderio-8e7c6b5f6f172022b4fd852a10ef36e8/', (req, res) => {
+  res.send('loaderio-8e7c6b5f6f172022b4fd852a10ef36e8'); 
+});
 
+app.get('/qa/questions*', (req, res) => {
   let data = url.parse(req.url, true);
   let path = data.pathname;
 
