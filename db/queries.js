@@ -169,19 +169,25 @@ module.exports = {
 
     // DISTINCT ON (q.question_id)
     // need to fix the limit and offset for the join
-    const query =
-      `SELECT
-        q.question_id, q.question_body, q.question_date, q.asker_name, q.question_helpfulness,
+    const query =`
+      WITH
+        count_qs AS (
+          SELECT
+            q.question_id, q.question_body, q.question_date, q.asker_name, q.question_helpfulness
+          FROM questions q
+          WHERE q.product_id = 3 AND q.reported = 0
+          LIMIT 10 OFFSET 5
+        )
+      SELECT
+        question_id, question_body, question_date, asker_name, question_helpfulness,
         a.answer_id, a.q_id, a.body, a.date, a.answerer_name, a.helpfulness,
         p.a_id, p.id, p.url
-      FROM questions q
+      FROM count_qs
       LEFT JOIN
-        answers a ON q.question_id = a.q_id AND a.reported = 0
+        answers a ON count_qs.question_id = a.q_id AND a.reported = 0
       LEFT JOIN
-        photos p ON a.answer_id = p.a_id
-      WHERE
-        q.product_id = $1 AND q.reported = 0
-      ORDER BY q.question_id;`;
+        photos p ON a.answer_id = p.a_id;
+      `;
 
     const value = [product_id];
 
@@ -245,9 +251,9 @@ module.exports = {
             response.results.push(questions[q]);
           }
 
-          let start = (page - 1) * count;
-          let end = start + count;
-          response.results = response.results.slice(start, end);
+          // let start = (page - 1) * count;
+          // let end = start + count;
+          // response.results = response.results.slice(start, end);
 
           return response;
 
