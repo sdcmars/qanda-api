@@ -442,7 +442,7 @@ module.exports = {
     const query = `
       SELECT
         a.answer_id, a.body, a.date, a.answerer_name, a.helpfulness,
-        ARRAY_AGG (p.url) photos
+        ARRAY_REMOVE(ARRAY_AGG(p.url), NULL) photos
       FROM answers a
       LEFT JOIN photos p
         ON a.answer_id = p.a_id
