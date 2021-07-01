@@ -180,6 +180,7 @@ module.exports = {
             q.question_id, q.question_body, q.question_date, q.asker_name, q.question_helpfulness
           FROM questions q
           WHERE q.product_id = $1 AND q.reported = 0
+          ORDER BY q.question_id
           LIMIT ${count} OFFSET ${(page - 1) * count}
         )
       SELECT
@@ -418,6 +419,7 @@ module.exports = {
     LEFT JOIN photos p
       ON a.answer_id = p.a_id
     WHERE q.product_id = $1
+    ORDER BY q.question_id
     GROUP BY q.question_id;
       `;
 
@@ -448,6 +450,7 @@ module.exports = {
         ON a.answer_id = p.a_id
       WHERE a.q_id = $1
       GROUP BY a.answer_id
+      ORDER BY a.answer_id
       LIMIT ${count} OFFSET ${(page - 1) * count};
     `;
 
