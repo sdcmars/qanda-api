@@ -12,8 +12,8 @@ const port = process.env.PORT || 3000;
 app.use(compression());
 app.use(express.json());
 
-app.get('/loaderio-f880d7ad42aea307232f1101c598356c/', (req, res) => {
-  res.send('loaderio-f880d7ad42aea307232f1101c598356c');
+app.get('/loaderio-b3b930b0f1f80bfb0096067abedb5e25/', (req, res) => {
+  res.send('loaderio-b3b930b0f1f80bfb0096067abedb5e25');
 });
 
 app.get('/qa/questions*', (req, res) => {
