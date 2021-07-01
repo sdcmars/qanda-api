@@ -2,12 +2,14 @@
 /* eslint-disable no-undef */
 const express = require('express');
 const url = require('url');
+const compression = require('compression');
 const db = require('../db/queries.js');
 
 
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.use(compression());
 app.use(express.json());
 
 app.get('/loaderio-ba3153c2717457017dbe4732075752b5/', (req, res) => {
@@ -25,7 +27,7 @@ app.get('/qa/questions*', (req, res) => {
       .then(response => res.send(response))
       .catch(err => console.log(err));
   } else {
-    return db.getQs(data.query)
+    return db.getQuestionsAgg(data.query)
       .then(response => res.send(response))
       .catch(err => console.log(err));
   }

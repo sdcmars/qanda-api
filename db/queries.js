@@ -409,8 +409,8 @@ module.exports = {
       q.question_date,
       q.asker_name,
       q.question_helpfulness,
-      ARRAY_AGG((a.answer_id, a.body, a.date, a.answerer_name, a.helpfulness)) answers,
-      ARRAY_AGG(p.url) photos
+      ARRAY_AGG(json_build_object('answer_id', a.answer_id, 'body', a.body, 'date', a.date, 'answerer_name', a.answerer_name, 'helpfulness', a.helpfulness)) answers,
+      ARRAY_REMOVE(ARRAY_AGG(p.url), NULL) photos
     FROM questions q
     LEFT JOIN answers a
       ON q.question_id = a.q_id
@@ -422,11 +422,14 @@ module.exports = {
 
     const value = [product_id];
 
+    let response = {
+      product_id: product_id,
+      results: []
+    }
+
     return pool.query(query, value)
       .then(res => {
         let rows = res.rows;
-        // let answers = rows.map(row => JSON.parse(row.answers));
-        // console.log(answers);
         return rows;
       })
       .catch(e => console.log(e));
