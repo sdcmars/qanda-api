@@ -2,6 +2,10 @@
 /* eslint-disable no-unused-vars */
 const pool = require('./index.js');
 
+pool.connect()
+  .then(console.log('connected to db'))
+  .catch(e => console.log(e));
+
 module.exports = {
   getQuestions: ({ product_id, count, page }) => {
     count = count || 5;
@@ -196,66 +200,63 @@ module.exports = {
       results: []
     }
 
-    return pool.connect()
-      .then(client => {
-        return client.query(query, value)
-        .then(res => {
-          client.release();
+    return pool.query(query, value)
+      .then(res => {
 
-          let rows = res.rows;
-          let questions = {};
-          let answers = {};
-          let photos = {};
+        let rows = res.rows;
+        let questions = {};
+        let answers = {};
+        let photos = {};
 
-          for (let x of rows) {
-            questions[x.question_id] = {
-              question_id: x.question_id,
-              question_body: x.question_body,
-              question_date: new Date(Number(x.question_date)),
-              asker_name: x.asker_name,
-              question_helpfulness: x.question_helpfulness,
-              answers: {}
-            };
+        for (let x of rows) {
+          questions[x.question_id] = {
+            question_id: x.question_id,
+            question_body: x.question_body,
+            question_date: new Date(Number(x.question_date)),
+            asker_name: x.asker_name,
+            question_helpfulness: x.question_helpfulness,
+            answers: {}
+          };
 
-            if (x.answer_id) {
-              answers[x.answer_id] = {
-                answer_id: x.answer_id,
-                question: x.q_id,
-                body: x.body,
-                date: new Date(Number(x.date)),
-                answerer_name: x.answerer_name,
-                helpfulness: x.helpfulness,
-                photos: []
-              }
+          if (x.answer_id) {
+            answers[x.answer_id] = {
+              answer_id: x.answer_id,
+              question: x.q_id,
+              body: x.body,
+              date: new Date(Number(x.date)),
+              answerer_name: x.answerer_name,
+              helpfulness: x.helpfulness,
+              photos: []
             }
+          }
 
-            if (x.id) {
-              photos[x.id] = {
-                id: x.a_id,
-                url: x.url
-              }
+          if (x.id) {
+            photos[x.id] = {
+              id: x.a_id,
+              url: x.url
             }
-
           }
 
-          for (let p in photos) {
-            answers[photos[p].id].photos.push(photos[p].url);
-          }
+        }
 
-          for (let a in answers) {
-            questions[answers[a].question].answers[answers[a].answer_id] = answers[a];
-            delete answers[a].question;
-          }
+        for (let p in photos) {
+          answers[photos[p].id].photos.push(photos[p].url);
+        }
 
-          for (let q in questions) {
-            response.results.push(questions[q]);
-          }
+        for (let a in answers) {
+          questions[answers[a].question].answers[answers[a].answer_id] = answers[a];
+          delete answers[a].question;
+        }
 
-          return response;
+        for (let q in questions) {
+          response.results.push(questions[q]);
+        }
 
-        })
-        .catch(err => console.log(err));
+        return response;
+
       })
+      .catch(err => console.log(err));
+
   },
   getAs: ({ question_id, count, page }) => {
     count = count || 5;
