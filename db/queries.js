@@ -277,7 +277,7 @@ module.exports = {
         p.a_id, p.url, p.id
       FROM count_as
       LEFT JOIN photos p
-        ON a.answer_id = p.a_id;
+        ON answer_id = p.a_id;
     `;
 
     const value = [question_id];
