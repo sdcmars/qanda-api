@@ -268,7 +268,7 @@ module.exports = {
         SELECT
           a.answer_id, a.body, a.date, a.answerer_name, a.helpfulness
         FROM answers a
-        WHERE a.answer_id = $1 AND a.reported = 0
+        WHERE a.q_id = $1 AND a.reported = 0
         ORDER BY a.answer_id
         LIMIT ${count} OFFSET ${(page - 1) * count}
       )
