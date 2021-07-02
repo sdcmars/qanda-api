@@ -27,7 +27,7 @@ app.get('/qa/questions*', (req, res) => {
       .then(response => res.send(response))
       .catch(err => console.log(err));
   } else {
-    return db.getQs(data.query)
+    return db.getQuestionsAgg(data.query)
       .then(response => res.send(response))
       .catch(err => console.log(err));
   }

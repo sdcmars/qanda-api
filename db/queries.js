@@ -405,22 +405,34 @@ module.exports = {
     page = page || 1;
 
     const query =`
-    SELECT
-      q.question_id,
-      q.question_body,
-      q.question_date,
-      q.asker_name,
-      q.question_helpfulness,
-      ARRAY_AGG(json_build_object('answer_id', a.answer_id, 'body', a.body, 'date', a.date, 'answerer_name', a.answerer_name, 'helpfulness', a.helpfulness)) answers,
-      ARRAY_REMOVE(ARRAY_AGG(p.url), NULL) photos
-    FROM questions q
-    LEFT JOIN answers a
-      ON q.question_id = a.q_id
-    LEFT JOIN photos p
-      ON a.answer_id = p.a_id
-    WHERE q.product_id = $1
-    ORDER BY q.question_id
-    GROUP BY q.question_id;
+      SELECT
+        q.question_id,
+        q.question_body,
+        q.question_date,
+        q.asker_name,
+        q.question_helpfulness,
+        (
+          SELECT array_agg(row_to_json(d))
+          FROM (
+            SELECT
+              a.answer_id,
+              a.body,
+              a.date,
+              a.answerer_name,
+              a.helpfulness,
+              ARRAY_REMOVE(ARRAY_AGG(photos.url), NULL) as photos
+            FROM answers a
+            WHERE a.q_id = q.question_id
+            GROUP BY a.answer_id
+          ) d
+        ) as answers
+      FROM questions q
+      LEFT JOIN answers
+        ON q.question_id = answers.q_id
+      LEFT JOIN photos
+        ON answers.answer_id = photos.a_id
+      WHERE q.product_id = $1
+      GROUP BY q.question_id;
       `;
 
     const value = [product_id];
