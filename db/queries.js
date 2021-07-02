@@ -188,10 +188,10 @@ module.exports = {
         a.answer_id, a.q_id, a.body, a.date, a.answerer_name, a.helpfulness,
         p.a_id, p.id, p.url
       FROM count_qs
-      LEFT JOIN
-        answers a ON count_qs.question_id = a.q_id AND a.reported = 0
-      LEFT JOIN
-        photos p ON a.answer_id = p.a_id;
+      LEFT JOIN answers a
+        ON count_qs.question_id = a.q_id AND a.reported = 0
+      LEFT JOIN photos p
+        ON a.answer_id = p.a_id;
       `;
 
     const value = [product_id];
@@ -264,14 +264,20 @@ module.exports = {
     page = page || 1;
 
     const query = `
+      WITH count_as AS (
+        SELECT
+          a.answer_id, a.body, a.date, a.answerer_name, a.helpfulness
+        FROM answers a
+        WHERE a.answer_id = $1 AND a.reported = 0
+        ORDER BY a.answer_id
+        LIMIT ${count} OFFSET ${(page - 1) * count}
+      )
       SELECT
-        a.answer_id, a.body, a.date, a.answerer_name, a.helpfulness,
+        answer_id, body, date, answerer_name, helpfulness,
         p.a_id, p.url, p.id
-      FROM answers a
+      FROM count_as
       LEFT JOIN photos p
-      ON a.answer_id = p.a_id
-      WHERE a.q_id = $1 AND a.reported = 0
-      ORDER BY a.answer_id;
+        ON a.answer_id = p.a_id;
     `;
 
     const value = [question_id];
@@ -306,7 +312,6 @@ module.exports = {
             }
           }
         }
-        console.log(answers);
 
         for (let p in photos) {
           answers[photos[p].id].photos.push(photos[p].url);
@@ -316,11 +321,9 @@ module.exports = {
           response.results.push(answers[a]);
         }
 
-        let start = (page - 1) * count;
-        let end = start + count;
-        response.results = response.results.slice(start, end);
-
-        console.log(answers);
+        // let start = (page - 1) * count;
+        // let end = start + count;
+        // response.results = response.results.slice(start, end);
 
         return response;
 

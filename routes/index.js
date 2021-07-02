@@ -23,7 +23,7 @@ app.get('/qa/questions*', (req, res) => {
   if (path.includes('answers')) {
     data.query.question_id = path.split('/')[3];
 
-    db.getAnswersAgg(data.query)
+    db.getAs(data.query)
       .then(response => res.send(response))
       .catch(err => console.log(err));
   } else {
